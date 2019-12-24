@@ -67,6 +67,16 @@ So when you pass the action creator to connect, it checks for all the functions/
 
 Remeber, dispatch fn is inbuild in redux and is the only way to update the store.
 
+* Never pass irrelevant store values inside a Component
+	eg. If a component wants to show user details, pass only the details of user to be shown and not the list of all users
+		from which component will need to filter out specifics.
+		Where to do it then? - In the mapStateToProps() in the component
+		- mapStateToProps(state, ownProps){
+			//use ownProps.soemthing to access the component xprops
+			//filter and pass only required info in the props
+		  }
+
+* Good practice to make action creators always responsible to manage state changes
 
 Redux-Thunk - middleware functions
 -----------
@@ -91,8 +101,129 @@ Why is it needed?
 	When we are using the async/await syntax, it compiles to a switch case,one of which returns a resp which isn't a pojo,
 	the dispatcher sends this to store, 1. isn't satisfied and error is shown.
 
+Rules with Redux-Thunk
+- Action creators can return action objects or can also return functions
+- if an action object is returned, it must have a payload
+
+
+Action creator --something--> Dispatch fn ---> Middleware(Thunk) --object?---> passes to Reducers
+								|								 --function?-> Invokes the fn and passes the dispatch & getState 
+								|								    args, --> waits for response
+				manually dipatches it to dispatcher<------------<-----------------------------
+
+dispatch - changes data in store, getState - get data from store
+
+* What does thunk do? 
+	- Waits for an api request to get completed and gets the response
+	- Manually sends the response(action) to the dispatch fn
 
 
 
-https://www.youtube.com/watch?v=OxxpIhDplY0
+Rules of Reducers : 
+1	 - Must return values other than undefined, if you forget return statement, by default js returns undefined
+	 - When we first start up a redux app, each reducer is called one time
+2	 - First time it is initialized, it recieves (undefined, some action object) 
+	 (undefined, action#1) -> Reducer -> State v1
+	 - Next time it is initialized : 
+	 (state v1, action#2) -> Reducer -> State v2
 
+	 We don't want undefined, so (selectedSong = null, action#1).. this is null only during startup and selectedSong value from previous state is taken every subsequent time.
+
+3	 - Should only use state + action arguements and not call any outside resource like api request etc
+
+4	 -  Do not mutate the state arguement! (You can but shouldn't)
+		Why? //https://github.com/reduxjs/redux/blob/master/src/combineReducers.ts
+		- var hasChanged ( bool telling if state of entire app has changed)
+		- if hasChanged == true -> new state is returned and react app re-renders else it doesn't
+		- Our reducer gets state arg, we mutate it, return it, it is compared with the state in combineReducers fn
+		- both the states point to the same addr, so comparision is always true -> hasChanged = false always
+		- App never re-renders and your mutations are never visible.
+
+What to do when you want to modify the state?
+---------------------------------------------
+
+BAD WAY
+state.push('abc'), state.pop(), state[0] = 'abc' 
+//all modifying the same state obj in memory -> As per Rule 4. hasChanged will be false -> app doesn't re-render, modifications not visible
+
+GOOD WAY
+//just make a new state obj, modify it and return it.
+1.Array Push operation --> [...state, 'newItem']
+2.Array Pop operation --> state.filter(element => element!='hi')
+3.Replace element in array --> state.map(e => e === 'hi' ? 'bye' : e)
+
+1.Updating prop in obj --> {...state, name:'abhi'}
+2.Adding prop in obj --> {..state, age:30}
+3.Delete prop from obj --> Use loadash, _.omit(state,'name')
+
+
+
+REACT ROUTER:
+-------------
+
+* Import BrowserRouter and Route components from 'react-router-dom'
+
+- When we create an instance of BrowserRouter, it makes a history object.
+- history obj extracts the url path : '/home' of 'localhost:3000/home' and sends it to BrowserRouter
+- BrowserRouter sends these path to individual Route components, which show themselves if the paths match
+- <Route path='/home' component={homeComp}/>
+
+* How to not navigate in React Apps : 
+	- Don't use <a /> tags for navigation
+	- When you use it, the deployement server responds with index.html file, dumps the old file it was showing
+	  and along with it all the redux/react state data is deleted
+* Use <Link to="/home" /> instead : 
+	- React Router prevents browser from fetching the index.html file again
+	- It sees the url in link -> sends it to history obj -> BrowserRouter shows appropriate component, url on browser also changes
+
+* Any component which isn't a child of BrowserRouter cannot use react router components like Link. So place everything inside BrowserRouter
+
+
+
+Authentication in React (Using Google OAuth) :
+----------------------------------------------
+278709796472-6f1jbller9oqufk24v6a2ham2khkr558.apps.googleusercontent.com
+
+
+///////////////////////////////////////////////////////
+Mutations in Javascript : 
+-------------------------
+Arrays and Objects are mutable
+Strings and numbers are immutable
+
+const str = 'hi';
+str[0] = 'b';
+console.log(str) // 'hi'
+
+const myArray = ['red', 'green'];
+//mutation
+myArray.push('yellow') // ['red', 'green', 'yellow']
+myArray.pop() //['green', 'yellow']
+myArray[0] = 'black' //['black', 'yellow']
+
+const myObj = {name: 'sai'};
+//mutation
+myObj.name = 'abhi'; {name:'abhi'}
+myObj.age = 30; {name:'abhi',age:30}
+
+
+Equality in Javascript :
+------------------------
+1 === 1 , 'hi' === 'hi' //give true, value comparision
+const nums = [1,2]; nums === nums //gives true
+nums === [1,2];//gives false, because comparision of where 
+data is stored in memory (address) happens and not the value
+
+
+
+
+
+
+
+toshal
+mahantesh
+rakshit
+senko 
+savin
+sakar
+ashish
